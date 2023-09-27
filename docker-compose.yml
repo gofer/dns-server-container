@@ -1,0 +1,49 @@
+services:
+  nsd:
+    image: dns_nsd
+    build:
+      context: nsd
+    container_name: dns-nsd
+    hostname: nsd.ns.localdomain
+    networks:
+      dns-internal:
+        ipv4_address: "${NSD_CONTAINER_IPADDRESS}"
+    deploy:
+      mode: global
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 128M
+          pids: 32
+  unbound:
+    image: dns_unbound
+    build:
+      context: unbound
+    container_name: dns-unbound
+    hostname: unbound.ns.localdomain
+    networks:
+      default:
+      dns-internal:
+        ipv4_address: "${UNBOUND_CONTAINER_IPADDRESS}"
+    ports:
+      - 127.0.0.1:53:53
+      - 127.0.0.1:53:53/udp
+    deploy:
+      mode: global
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 128M
+          pids: 32
+
+networks:
+  default:
+    internal: false
+  dns-internal:
+    driver: bridge
+    internal: true
+    ipam:
+      driver: default
+      config:
+        - subnet: "${DNS_INTERNAL_IPRANGE}.0/30"
+          gateway: "${DNS_INTERNAL_GATEWAY}"
